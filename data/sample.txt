@@ -1,0 +1,17 @@
+LangChain and LangGraph: Building RAG Systems
+
+LangChain is a framework for developing applications powered by language models. It provides components for document loading, text splitting, embeddings, vector stores, and retrieval.
+
+LangGraph extends LangChain with graph-based workflows. It allows you to build state machines where nodes represent processing steps and edges define transitions. This is ideal for self-reflective RAG systems that can:
+- Decide when to retrieve context vs respond directly
+- Grade retrieved documents for relevance
+- Rewrite questions when retrieval quality is poor
+- Generate answers grounded in the retrieved context
+
+RAG (Retrieval-Augmented Generation) combines retrieval with generation. The typical flow:
+1. User asks a question
+2. System retrieves relevant documents from a vector store
+3. Retrieved context is passed to the LLM
+4. LLM generates an answer grounded in the context
+
+Agentic RAG goes further by using the LLM to make decisions at each step, enabling self-correction and improved quality.
