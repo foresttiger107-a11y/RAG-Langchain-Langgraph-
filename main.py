@@ -20,15 +20,12 @@ def main():
         print("Error: OPENAI_API_KEY is required. Copy .env.example to .env and set your key.")
         sys.exit(1)
 
-    if not VECTORSTORE_DIR.exists():
-        print(
-            "Error: Vector store not found. Run indexing first:\n"
-            "  python scripts/index_documents.py"
-        )
-        sys.exit(1)
-
     print("Loading RAG system...")
-    vectorstore = load_existing_vectorstore(persist_directory=VECTORSTORE_DIR)
+    try:
+        vectorstore = load_existing_vectorstore(persist_directory=VECTORSTORE_DIR)
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
     retriever = get_retriever(vectorstore)
     graph = build_rag_graph(retriever)
 

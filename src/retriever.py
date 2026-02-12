@@ -12,10 +12,7 @@ from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-try:
-    from langchain_chroma import Chroma
-except ImportError:
-    from langchain_community.vectorstores import Chroma  # fallback
+from langchain_community.vectorstores import FAISS
 
 from .config import (
     CHUNK_OVERLAP,
@@ -79,37 +76,39 @@ def create_vectorstore(
     documents: List[Document],
     persist_directory: Optional[Path] = None,
     collection_name: str = "rag_docs",
-) -> Chroma:
-    """Create and persist a Chroma vector store from documents."""
+) -> FAISS:
+    """Create and persist a FAISS vector store from documents."""
     embeddings = get_embeddings()
-    persist_path = str(persist_directory or VECTORSTORE_DIR)
+    persist_path = persist_directory or VECTORSTORE_DIR
+    persist_path.mkdir(parents=True, exist_ok=True)
 
-    vectorstore = Chroma.from_documents(
+    vectorstore = FAISS.from_documents(
         documents=documents,
         embedding=embeddings,
-        persist_directory=persist_path,
-        collection_name=collection_name,
     )
+    vectorstore.save_local(str(persist_path))
     return vectorstore
 
 
 def load_existing_vectorstore(
     persist_directory: Optional[Path] = None,
     collection_name: str = "rag_docs",
-) -> Chroma:
-    """Load an existing Chroma vector store."""
+):
+    """Load an existing FAISS vector store."""
     embeddings = get_embeddings()
-    persist_path = str(persist_directory or VECTORSTORE_DIR)
+    persist_path = persist_directory or VECTORSTORE_DIR
+    index_path = persist_path / "index.faiss"
 
-    return Chroma(
-        persist_directory=persist_path,
-        embedding_function=embeddings,
-        collection_name=collection_name,
-    )
+    if not index_path.exists():
+        raise FileNotFoundError(
+            f"Vector store not found at {persist_path}. "
+            "Run: python scripts/index_documents.py"
+        )
+    return FAISS.load_local(str(persist_path), embeddings, allow_dangerous_deserialization=True)
 
 
 def get_retriever(
-    vectorstore: Chroma,
+    vectorstore,
     k: int = RETRIEVAL_TOP_K,
     search_type: str = "similarity",
 ) -> VectorStoreRetriever:
